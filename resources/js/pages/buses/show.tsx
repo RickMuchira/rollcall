@@ -1,13 +1,15 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState, useRef, useEffect } from 'react';
 import { Bus, Users, User, Printer, Download, ArrowLeft, Phone, Mail, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { index as busesIndex, edit } from '@/routes/buses';
+import { index as busesIndex, edit, update } from '@/routes/buses';
 
 interface Bus {
     id: number;
@@ -71,6 +73,26 @@ export default function BusShow({ bus }: Props) {
     
     // State to track current time for real-time display
     const [currentTime, setCurrentTime] = useState(new Date());
+    
+    // Form for updating bus staff assignments
+    const busStaffForm = useForm({
+        bus_staff: [] as { trip_type: string; role: string; staff_name: string }[],
+    });
+
+    // Initialize form data with existing staff assignments
+    useEffect(() => {
+        const initialStaff = [];
+        if (bus.busStaff) {
+            for (const staff of bus.busStaff) {
+                initialStaff.push({
+                    trip_type: staff.trip_type,
+                    role: staff.role,
+                    staff_name: staff.staff_name,
+                });
+            }
+        }
+        busStaffForm.setData('bus_staff', initialStaff);
+    }, [bus]);
 
     // Update current time every minute
     useEffect(() => {
@@ -90,6 +112,16 @@ export default function BusShow({ bus }: Props) {
         window.print();
         document.body.innerHTML = originalContent;
         window.location.reload(); // Reload to restore React state
+    };
+
+    const handleStaffUpdate = (e: React.FormEvent) => {
+        e.preventDefault();
+        busStaffForm.put(update({ bus: bus.id }).url, {
+            onSuccess: () => {
+                // Refresh the page to update the display
+                router.reload();
+            },
+        });
     };
 
     // Safely access busStaff property with fallback
@@ -229,33 +261,113 @@ export default function BusShow({ bus }: Props) {
                                 <h1 className="text-3xl font-bold">{bus.number}</h1>
                                 {bus.name && <span className="text-xl opacity-90">• {bus.name}</span>}
                             </div>
-                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {tripTypes.map((trip) => {
-                                    const driver = getBusStaff().find(s => s.trip_type === trip.value && s.role === 'driver');
-                                    const assistant = getBusStaff().find(s => s.trip_type === trip.value && s.role === 'assistant');
-                                    const isActive = isTripActive(trip.startTime, trip.endTime);
-                                    return (
-                                        <div key={trip.value} className={`rounded-lg p-3 ${isActive ? 'bg-green-500/20' : 'bg-white/10'}`}>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <h3 className="font-semibold text-sm">{trip.label}</h3>
-                                                <Badge className={getTripStatusColor(isActive)}>
-                                                    {isActive ? 'Active Now' : 'Inactive'}
-                                                </Badge>
-                                            </div>
-                                            <div className="space-y-1 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <User className="h-4 w-4" />
-                                                    <span>Driver: {driver?.staff_name || 'Not assigned'}</span>
+                            
+                            {/* Staff Assignment Cards */}
+                            <form onSubmit={handleStaffUpdate}>
+                                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {tripTypes.map((trip) => {
+                                        const driverAssignment = busStaffForm.data.bus_staff.find(
+                                            (assignment) => assignment.trip_type === trip.value && assignment.role === 'driver'
+                                        );
+                                        const assistantAssignment = busStaffForm.data.bus_staff.find(
+                                            (assignment) => assignment.trip_type === trip.value && assignment.role === 'assistant'
+                                        );
+                                        
+                                        const isActive = isTripActive(trip.startTime, trip.endTime);
+                                        return (
+                                            <div key={trip.value} className={`rounded-lg p-3 ${isActive ? 'bg-green-500/20' : 'bg-white/10'}`}>
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <h3 className="font-semibold text-sm">{trip.label}</h3>
+                                                    <Badge className={getTripStatusColor(isActive)}>
+                                                        {isActive ? 'Active Now' : 'Inactive'}
+                                                    </Badge>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <User className="h-4 w-4" />
-                                                    <span>Assistant: {assistant?.staff_name || 'Not assigned'}</span>
+                                                <div className="space-y-3 text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <User className="h-4 w-4" />
+                                                        <div className="flex-1">
+                                                            <Label htmlFor={`driver_${trip.value}`} className="text-xs mb-1">Driver</Label>
+                                                            <Input
+                                                                id={`driver_${trip.value}`}
+                                                                value={driverAssignment?.staff_name || ''}
+                                                                onChange={(e) => {
+                                                                    const newStaff = [...busStaffForm.data.bus_staff];
+                                                                    const existingIndex = newStaff.findIndex(
+                                                                        (assignment) => assignment.trip_type === trip.value && assignment.role === 'driver'
+                                                                    );
+
+                                                                    if (e.target.value) {
+                                                                        if (existingIndex >= 0) {
+                                                                            newStaff[existingIndex].staff_name = e.target.value;
+                                                                        } else {
+                                                                            newStaff.push({
+                                                                                trip_type: trip.value,
+                                                                                role: 'driver',
+                                                                                staff_name: e.target.value,
+                                                                            });
+                                                                        }
+                                                                    } else {
+                                                                        if (existingIndex >= 0) {
+                                                                            newStaff.splice(existingIndex, 1);
+                                                                        }
+                                                                    }
+
+                                                                    busStaffForm.setData('bus_staff', newStaff);
+                                                                }}
+                                                                placeholder="Driver name"
+                                                                className="text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <User className="h-4 w-4" />
+                                                        <div className="flex-1">
+                                                            <Label htmlFor={`assistant_${trip.value}`} className="text-xs mb-1">Assistant</Label>
+                                                            <Input
+                                                                id={`assistant_${trip.value}`}
+                                                                value={assistantAssignment?.staff_name || ''}
+                                                                onChange={(e) => {
+                                                                    const newStaff = [...busStaffForm.data.bus_staff];
+                                                                    const existingIndex = newStaff.findIndex(
+                                                                        (assignment) => assignment.trip_type === trip.value && assignment.role === 'assistant'
+                                                                    );
+
+                                                                    if (e.target.value) {
+                                                                        if (existingIndex >= 0) {
+                                                                            newStaff[existingIndex].staff_name = e.target.value;
+                                                                        } else {
+                                                                            newStaff.push({
+                                                                                trip_type: trip.value,
+                                                                                role: 'assistant',
+                                                                                staff_name: e.target.value,
+                                                                            });
+                                                                        }
+                                                                    } else {
+                                                                        if (existingIndex >= 0) {
+                                                                            newStaff.splice(existingIndex, 1);
+                                                                        }
+                                                                    }
+
+                                                                    busStaffForm.setData('bus_staff', newStaff);
+                                                                }}
+                                                                placeholder="Assistant name"
+                                                                className="text-sm"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                                
+                                <div className="mt-4 flex justify-end">
+                                    <Button type="submit" disabled={busStaffForm.processing} className="bg-white text-blue-600 hover:bg-gray-100">
+                                        Save Staff Assignments
+                                    </Button>
+                                </div>
+                            </form>
+                            
                             <div className="mt-4 flex items-center gap-2">
                                 <Users className="h-5 w-5" />
                                 <span className="text-lg">{bus.students.length} Students</span>
@@ -321,78 +433,57 @@ export default function BusShow({ bus }: Props) {
                         </CardContent>
                     </Card>
 
-                    {/* Driver & Assistant Section */}
+                    {/* Quick Stats Section */}
                     <Card className="flex-1">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <User className="h-5 w-5 text-green-600" />
-                                Bus Staff
+                                Bus Information
                             </CardTitle>
                             <CardDescription>
-                                Driver and assistant information
+                                Additional bus information and statistics
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-6">
-                                {/* Driver Card */}
-                                <div className="rounded-lg border bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 p-6">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
-                                            <User className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                                Driver
-                                            </h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                Bus operator
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p className="text-xl font-medium text-gray-900 dark:text-gray-100">
-                                            {bus.driver_name || 'Not assigned'}
-                                        </p>
-                                        {bus.driver_name && (
-                                            <div className="flex gap-4 text-sm text-muted-foreground">
-                                                <div className="flex items-center gap-1">
-                                                    <Phone className="h-4 w-4" />
-                                                    <span>Contact info available</span>
-                                                </div>
+                                {/* Driver & Assistant Info */}
+                                <div className="space-y-4">
+                                    <div className="rounded-lg border bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 p-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
+                                                <User className="h-5 w-5" />
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <Separator />
-
-                                {/* Assistant Card */}
-                                <div className="rounded-lg border bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 p-6">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
-                                            <User className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                                Assistant
-                                            </h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                Bus assistant
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p className="text-xl font-medium text-gray-900 dark:text-gray-100">
-                                            {bus.assistant_name || 'Not assigned'}
-                                        </p>
-                                        {bus.assistant_name && (
-                                            <div className="flex gap-4 text-sm text-muted-foreground">
-                                                <div className="flex items-center gap-1">
-                                                    <Phone className="h-4 w-4" />
-                                                    <span>Contact info available</span>
-                                                </div>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                                                    Driver
+                                                </h3>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Bus operator
+                                                </p>
                                             </div>
-                                        )}
+                                        </div>
+                                        <p className="text-base font-medium text-gray-900 dark:text-gray-100">
+                                            {getBusStaff().find(s => s.role === 'driver')?.staff_name || 'Not assigned'}
+                                        </p>
+                                    </div>
+
+                                    <div className="rounded-lg border bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 p-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                                                <User className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                                                    Assistant
+                                                </h3>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Bus assistant
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p className="text-base font-medium text-gray-900 dark:text-gray-100">
+                                            {getBusStaff().find(s => s.role === 'assistant')?.staff_name || 'Not assigned'}
+                                        </p>
                                     </div>
                                 </div>
 

@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { index as busesIndex, show } from '@/routes/buses';
+import { index as busesIndex, show, update, store, destroy } from '@/routes/buses';
 
 interface Bus {
     id: number;
@@ -65,6 +65,10 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: busesIndex().url,
     },
 ];
+
+interface Props {
+    buses: Bus[];
+}
 
 export default function BusesIndex({ buses }: Props) {
     const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
