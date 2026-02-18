@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { Head } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 
-export default function Rollcall() {
-    const [students, setStudents] = useState([]);
+export default function Rollcall({ students: initialStudents = [] }) {
+    const [students, setStudents] = useState(initialStudents);
     const [formData, setFormData] = useState({
         name: '',
         grade: '',
         transport: false,
         busTrip: ''
     });
+    const [errors, setErrors] = useState({});
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -21,26 +22,28 @@ export default function Rollcall() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Add student to the list
-        const newStudent = {
-            id: Date.now(),
-            ...formData
-        };
-        setStudents(prev => [...prev, newStudent]);
-        // Reset form
-        setFormData({
-            name: '',
-            grade: '',
-            transport: false,
-            busTrip: ''
+        
+        // Submit the form data using Inertia
+        router.post('/rollcall', {
+            name: formData.name,
+            grade: formData.grade,
+            transport: formData.transport,
+            busTrip: formData.busTrip
+        }, {
+            onSuccess: (result) => {
+                // Reset form
+                setFormData({
+                    name: '',
+                    grade: '',
+                    transport: false,
+                    busTrip: ''
+                });
+                setErrors({});
+            },
+            onError: (errors) => {
+                setErrors(errors);
+            }
         });
-    };
-
-    // Function to handle printing
-    const handlePrint = (grouped = false) => {
-        // In a real application, you would navigate to the print page with the appropriate data
-        // For now, we'll just log the action
-        console.log(`Printing ${grouped ? 'grouped' : 'ungrouped'} list`);
     };
 
     return (
@@ -61,9 +64,10 @@ export default function Rollcall() {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleInputChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className={`w-full px-3 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                 required
                             />
+                            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                         </div>
                         
                         <div>
@@ -74,9 +78,10 @@ export default function Rollcall() {
                                 name="grade"
                                 value={formData.grade}
                                 onChange={handleInputChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className={`w-full px-3 py-2 border ${errors.grade ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                 required
                             />
+                            {errors.grade && <p className="mt-1 text-sm text-red-600">{errors.grade}</p>}
                         </div>
                         
                         <div className="flex items-center">
@@ -99,8 +104,8 @@ export default function Rollcall() {
                                     name="busTrip"
                                     value={formData.busTrip}
                                     onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
+                                    className={`w-full px-3 py-2 border ${errors.busTrip ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                    required={formData.transport}
                                 >
                                     <option value="">Select Trip</option>
                                     <option value="Trip 1 Morning">Trip 1 Morning</option>
@@ -108,6 +113,7 @@ export default function Rollcall() {
                                     <option value="Trip 1 Evening">Trip 1 Evening</option>
                                     <option value="Trip 2 Evening">Trip 2 Evening</option>
                                 </select>
+                                {errors.busTrip && <p className="mt-1 text-sm text-red-600">{errors.busTrip}</p>}
                             </div>
                         )}
                         
@@ -156,7 +162,7 @@ export default function Rollcall() {
                                         <td className="px-6 py-4 whitespace-nowrap">{student.name}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">{student.grade}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">{student.transport ? 'Yes' : 'No'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">{student.transport ? student.busTrip : '-'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{student.transport ? student.bus_trip : '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>

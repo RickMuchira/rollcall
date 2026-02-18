@@ -1,1 +1,48 @@
-Nothing should be ignored based on the provided file changes. The only file added is a markdown documentation file (`rollcall_system_description.md`), which is a source/config file and should not be ignored.
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
+
+# Dependencies
+node_modules/
+vendor/
+composer.lock
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Laravel specific
+storage/
+bootstrap/cache/
+```
