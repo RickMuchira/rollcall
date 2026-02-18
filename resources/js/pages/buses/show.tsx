@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { index as busesIndex, edit as busEdit } from '@/routes/buses';
+import { index as busesIndex, edit } from '@/routes/buses';
 
 interface Bus {
     id: number;
@@ -194,7 +194,7 @@ export default function BusShow({ bus }: Props) {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => router.visit(busEdit({ id: bus.id }).url)}
+                                    onClick={() => router.visit(edit({ bus: bus.id }).url)}
                                     className="text-white hover:bg-white/20 print:hidden"
                                 >
                                     <Edit className="mr-2 h-4 w-4" />
