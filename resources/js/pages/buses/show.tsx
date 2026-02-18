@@ -14,7 +14,8 @@ interface Bus {
     number: string;
     name?: string;
     students: Student[];
-    busStaff: BusStaff[];
+    busStaff?: BusStaff[];
+    driver_name?: string;
 }
 
 interface BusStaff {
@@ -78,11 +79,14 @@ export default function BusShow({ bus }: Props) {
         window.location.reload(); // Reload to restore React state
     };
 
+    // Safely access busStaff property with fallback
+    const getBusStaff = () => bus.busStaff || [];
+
     const handleDownload = () => {
         const staffByTrip = tripTypes.reduce((acc, trip) => {
             acc[trip.label] = {
-                driver: bus.busStaff.find(s => s.trip_type === trip.value && s.role === 'driver')?.staff_name || 'Not assigned',
-                assistant: bus.busStaff.find(s => s.trip_type === trip.value && s.role === 'assistant')?.staff_name || 'Not assigned',
+                driver: getBusStaff().find(s => s.trip_type === trip.value && s.role === 'driver')?.staff_name || 'Not assigned',
+                assistant: getBusStaff().find(s => s.trip_type === trip.value && s.role === 'assistant')?.staff_name || 'Not assigned',
             };
             return acc;
         }, {} as Record<string, { driver: string; assistant: string }>);
@@ -182,8 +186,8 @@ export default function BusShow({ bus }: Props) {
                             </div>
                             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {tripTypes.map((trip) => {
-                                    const driver = bus.busStaff.find(s => s.trip_type === trip.value && s.role === 'driver');
-                                    const assistant = bus.busStaff.find(s => s.trip_type === trip.value && s.role === 'assistant');
+                                    const driver = getBusStaff().find(s => s.trip_type === trip.value && s.role === 'driver');
+                                    const assistant = getBusStaff().find(s => s.trip_type === trip.value && s.role === 'assistant');
                                     return (
                                         <div key={trip.value} className="bg-white/10 rounded-lg p-3">
                                             <h3 className="font-semibold text-sm mb-2">{trip.label}</h3>
