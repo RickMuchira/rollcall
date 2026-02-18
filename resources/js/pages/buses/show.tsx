@@ -1,13 +1,13 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { useState, useRef } from 'react';
-import { Bus, Users, User, Printer, Download, ArrowLeft, Phone, Mail } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Bus, Users, User, Printer, Download, ArrowLeft, Phone, Mail, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { index as busesIndex } from '@/routes/buses';
+import { index as busesIndex, edit as busEdit } from '@/routes/buses';
 
 interface Bus {
     id: number;
@@ -16,6 +16,7 @@ interface Bus {
     students: Student[];
     busStaff?: BusStaff[];
     driver_name?: string;
+    assistant_name?: string;
 }
 
 interface BusStaff {
@@ -42,10 +43,10 @@ interface Props {
 }
 
 const tripTypes = [
-    { value: 'trip_1_morning', label: 'Trip 1 Morning' },
-    { value: 'trip_2_morning', label: 'Trip 2 Morning' },
-    { value: 'trip_1_evening', label: 'Trip 1 Evening' },
-    { value: 'trip_2_evening', label: 'Trip 2 Evening' },
+    { value: 'trip_1_morning', label: 'Trip 1 Morning', startTime: '06:00', endTime: '07:00' },
+    { value: 'trip_2_morning', label: 'Trip 2 Morning', startTime: '07:00', endTime: '08:30' },
+    { value: 'trip_1_evening', label: 'Trip 1 Evening', startTime: '15:00', endTime: '16:00' },
+    { value: 'trip_2_evening', label: 'Trip 2 Evening', startTime: '16:00', endTime: '17:30' },
 ];
 
 const formatTripType = (tripType: string): string => {
@@ -67,6 +68,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function BusShow({ bus }: Props) {
     const { flash } = usePage().props as { flash?: { success?: string } };
     const printRef = useRef<HTMLDivElement>(null);
+    
+    // State to track current time for real-time display
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    // Update current time every minute
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000); // Update every minute
+
+        return () => clearInterval(timer);
+    }, []);
 
     const handlePrint = () => {
         const printContent = printRef.current;
@@ -116,6 +129,29 @@ export default function BusShow({ bus }: Props) {
         URL.revokeObjectURL(url);
     };
 
+    // Function to check if a trip is currently active based on time
+    const isTripActive = (startTime: string, endTime: string): boolean => {
+        const now = currentTime;
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        
+        // Convert time strings to numbers for comparison
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+        
+        // Create comparable time values (in minutes since midnight)
+        const currentTimeInMinutes = currentHours * 60 + currentMinutes;
+        const startTimeInMinutes = startHour * 60 + startMinute;
+        const endTimeInMinutes = endHour * 60 + endMinute;
+        
+        return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+    };
+
+    // Function to get the badge color based on whether the trip is active
+    const getTripStatusColor = (isActive: boolean) => {
+        return isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    };
+
     const getTripBadgeColor = (tripType: string) => {
         switch (tripType) {
             case 'trip_1_morning':
@@ -155,6 +191,15 @@ export default function BusShow({ bus }: Props) {
                                     <ArrowLeft className="mr-2 h-4 w-4" />
                                     Back to Buses
                                 </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.visit(busEdit({ id: bus.id }).url)}
+                                    className="text-white hover:bg-white/20 print:hidden"
+                                >
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                </Button>
                             </div>
                             <div className="flex gap-2 print:hidden">
                                 <Button
@@ -188,9 +233,15 @@ export default function BusShow({ bus }: Props) {
                                 {tripTypes.map((trip) => {
                                     const driver = getBusStaff().find(s => s.trip_type === trip.value && s.role === 'driver');
                                     const assistant = getBusStaff().find(s => s.trip_type === trip.value && s.role === 'assistant');
+                                    const isActive = isTripActive(trip.startTime, trip.endTime);
                                     return (
-                                        <div key={trip.value} className="bg-white/10 rounded-lg p-3">
-                                            <h3 className="font-semibold text-sm mb-2">{trip.label}</h3>
+                                        <div key={trip.value} className={`rounded-lg p-3 ${isActive ? 'bg-green-500/20' : 'bg-white/10'}`}>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h3 className="font-semibold text-sm">{trip.label}</h3>
+                                                <Badge className={getTripStatusColor(isActive)}>
+                                                    {isActive ? 'Active Now' : 'Inactive'}
+                                                </Badge>
+                                            </div>
                                             <div className="space-y-1 text-sm">
                                                 <div className="flex items-center gap-2">
                                                     <User className="h-4 w-4" />
