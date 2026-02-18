@@ -392,16 +392,6 @@ export default function BusesIndex({ buses }: Props) {
                                                                 size="sm"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    setEditingBus(bus);
-                                                                }}
-                                                            >
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
                                                                     setDeleteBus(bus);
                                                                 }}
                                                                 disabled={(bus.students_count || 0) > 0}
