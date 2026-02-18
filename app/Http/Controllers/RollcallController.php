@@ -71,11 +71,10 @@ class RollcallController extends Controller
             'transport' => $validated['transport'] ?? false,
         ]);
 
-        // Attach bus and trips if transport is enabled
-        if (($validated['transport'] ?? false) && isset($validated['bus_id']) && ! empty($validated['trip_types'])) {
-            $busId = $validated['bus_id'];
-            foreach ($validated['trip_types'] as $tripType) {
-                $student->buses()->attach($busId, ['trip_type' => $tripType]);
+        // Attach bus assignments if transport is enabled
+        if (($validated['transport'] ?? false) && ! empty($validated['bus_assignments'])) {
+            foreach ($validated['bus_assignments'] as $assignment) {
+                $student->buses()->attach($assignment['bus_id'], ['trip_type' => $assignment['trip_type']]);
             }
         }
 
@@ -106,10 +105,9 @@ class RollcallController extends Controller
 
         // Update bus assignments
         $student->buses()->detach();
-        if (($validated['transport'] ?? false) && isset($validated['bus_id']) && ! empty($validated['trip_types'])) {
-            $busId = $validated['bus_id'];
-            foreach ($validated['trip_types'] as $tripType) {
-                $student->buses()->attach($busId, ['trip_type' => $tripType]);
+        if (($validated['transport'] ?? false) && ! empty($validated['bus_assignments'])) {
+            foreach ($validated['bus_assignments'] as $assignment) {
+                $student->buses()->attach($assignment['bus_id'], ['trip_type' => $assignment['trip_type']]);
             }
         }
 

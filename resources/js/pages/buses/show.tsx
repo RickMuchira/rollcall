@@ -1,0 +1,371 @@
+import { Head, router, usePage } from '@inertiajs/react';
+import { useState, useRef } from 'react';
+import { Bus, Users, User, Printer, Download, ArrowLeft, Phone, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
+import { index as busesIndex } from '@/routes/buses';
+
+interface Bus {
+    id: number;
+    number: string;
+    name?: string;
+    students: Student[];
+    busStaff: BusStaff[];
+}
+
+interface BusStaff {
+    id: number;
+    trip_type: string;
+    role: string;
+    staff_name: string;
+}
+
+interface Student {
+    id: number;
+    name: string;
+    grade?: {
+        id: number;
+        name: string;
+    };
+    pivot?: {
+        trip_type: string;
+    };
+}
+
+interface Props {
+    bus: Bus;
+}
+
+const tripTypes = [
+    { value: 'trip_1_morning', label: 'Trip 1 Morning' },
+    { value: 'trip_2_morning', label: 'Trip 2 Morning' },
+    { value: 'trip_1_evening', label: 'Trip 1 Evening' },
+    { value: 'trip_2_evening', label: 'Trip 2 Evening' },
+];
+
+const formatTripType = (tripType: string): string => {
+    const trip = tripTypes.find((t) => t.value === tripType);
+    return trip ? trip.label : tripType;
+};
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Buses',
+        href: busesIndex().url,
+    },
+    {
+        title: 'Bus Details',
+        href: '#',
+    },
+];
+
+export default function BusShow({ bus }: Props) {
+    const { flash } = usePage().props as { flash?: { success?: string } };
+    const printRef = useRef<HTMLDivElement>(null);
+
+    const handlePrint = () => {
+        const printContent = printRef.current;
+        if (!printContent) return;
+
+        const originalContent = document.body.innerHTML;
+        document.body.innerHTML = printContent.innerHTML;
+        window.print();
+        document.body.innerHTML = originalContent;
+        window.location.reload(); // Reload to restore React state
+    };
+
+    const handleDownload = () => {
+        const staffByTrip = tripTypes.reduce((acc, trip) => {
+            acc[trip.label] = {
+                driver: bus.busStaff.find(s => s.trip_type === trip.value && s.role === 'driver')?.staff_name || 'Not assigned',
+                assistant: bus.busStaff.find(s => s.trip_type === trip.value && s.role === 'assistant')?.staff_name || 'Not assigned',
+            };
+            return acc;
+        }, {} as Record<string, { driver: string; assistant: string }>);
+
+        const data = {
+            bus: {
+                number: bus.number,
+                name: bus.name,
+                staff: staffByTrip,
+            },
+            students: bus.students.map(student => ({
+                name: student.name,
+                grade: student.grade?.name || 'N/A',
+                trip: student.pivot?.trip_type ? formatTripType(student.pivot.trip_type) : 'N/A',
+            })),
+            generatedAt: new Date().toLocaleString(),
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bus-${bus.number}-rollcall.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const getTripBadgeColor = (tripType: string) => {
+        switch (tripType) {
+            case 'trip_1_morning':
+            case 'trip_2_morning':
+                return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+            case 'trip_1_evening':
+            case 'trip_2_evening':
+                return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+            default:
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        }
+    };
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={`${bus.number} - Bus Details`} />
+
+            <div ref={printRef} className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 print:p-0 print:overflow-visible">
+                {flash?.success && (
+                    <div className="rounded-md bg-green-50 p-4 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400 print:hidden">
+                        {flash.success}
+                    </div>
+                )}
+
+                {/* Header Section */}
+                <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-6 text-white shadow-lg print:bg-white print:text-black">
+                    <div className="absolute inset-0 bg-black/10 print:hidden"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.visit(busesIndex().url)}
+                                    className="text-white hover:bg-white/20 print:hidden"
+                                >
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Back to Buses
+                                </Button>
+                            </div>
+                            <div className="flex gap-2 print:hidden">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handlePrint}
+                                    className="bg-white/20 text-white hover:bg-white/30"
+                                >
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Print
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handleDownload}
+                                    className="bg-white/20 text-white hover:bg-white/30"
+                                >
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="mt-6">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Bus className="h-8 w-8" />
+                                <h1 className="text-3xl font-bold">{bus.number}</h1>
+                                {bus.name && <span className="text-xl opacity-90">• {bus.name}</span>}
+                            </div>
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {tripTypes.map((trip) => {
+                                    const driver = bus.busStaff.find(s => s.trip_type === trip.value && s.role === 'driver');
+                                    const assistant = bus.busStaff.find(s => s.trip_type === trip.value && s.role === 'assistant');
+                                    return (
+                                        <div key={trip.value} className="bg-white/10 rounded-lg p-3">
+                                            <h3 className="font-semibold text-sm mb-2">{trip.label}</h3>
+                                            <div className="space-y-1 text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <User className="h-4 w-4" />
+                                                    <span>Driver: {driver?.staff_name || 'Not assigned'}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <User className="h-4 w-4" />
+                                                    <span>Assistant: {assistant?.staff_name || 'Not assigned'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="mt-4 flex items-center gap-2">
+                                <Users className="h-5 w-5" />
+                                <span className="text-lg">{bus.students.length} Students</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content - Split Layout */}
+                <div className="grid gap-6 lg:grid-cols-2">
+                    {/* Students Section */}
+                    <Card className="flex-1">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Users className="h-5 w-5 text-blue-600" />
+                                Student Roster
+                            </CardTitle>
+                            <CardDescription>
+                                Students assigned to this bus
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {bus.students.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                                    <p className="text-muted-foreground">No students assigned to this bus yet.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {bus.students.map((student, index) => (
+                                        <div
+                                            key={student.id}
+                                            className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-md transition-shadow"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold dark:bg-blue-900 dark:text-blue-300">
+                                                    {index + 1}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                                                        {student.name}
+                                                    </p>
+                                                    {student.grade && (
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {student.grade.name}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <Badge
+                                                variant="secondary"
+                                                className={getTripBadgeColor(student.pivot?.trip_type || '')}
+                                            >
+                                                {student.pivot?.trip_type ?
+                                                    formatTripType(student.pivot.trip_type) :
+                                                    'No Trip'
+                                                }
+                                            </Badge>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Driver & Assistant Section */}
+                    <Card className="flex-1">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <User className="h-5 w-5 text-green-600" />
+                                Bus Staff
+                            </CardTitle>
+                            <CardDescription>
+                                Driver and assistant information
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-6">
+                                {/* Driver Card */}
+                                <div className="rounded-lg border bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
+                                            <User className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                                Driver
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Bus operator
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xl font-medium text-gray-900 dark:text-gray-100">
+                                            {bus.driver_name || 'Not assigned'}
+                                        </p>
+                                        {bus.driver_name && (
+                                            <div className="flex gap-4 text-sm text-muted-foreground">
+                                                <div className="flex items-center gap-1">
+                                                    <Phone className="h-4 w-4" />
+                                                    <span>Contact info available</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <Separator />
+
+                                {/* Assistant Card */}
+                                <div className="rounded-lg border bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                                            <User className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                                Assistant
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Bus assistant
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xl font-medium text-gray-900 dark:text-gray-100">
+                                            {bus.assistant_name || 'Not assigned'}
+                                        </p>
+                                        {bus.assistant_name && (
+                                            <div className="flex gap-4 text-sm text-muted-foreground">
+                                                <div className="flex items-center gap-1">
+                                                    <Phone className="h-4 w-4" />
+                                                    <span>Contact info available</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Quick Stats */}
+                                <div className="rounded-lg border bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 p-4">
+                                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">
+                                        Quick Stats
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4 text-center">
+                                        <div>
+                                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                                {bus.students.length}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">Total Students</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                                {bus.students.filter(s => s.pivot?.trip_type?.includes('morning')).length}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">Morning Trips</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </AppLayout>
+    );
+}

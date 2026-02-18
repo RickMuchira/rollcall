@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\RollcallController::update
-* @see app/Http/Controllers/RollcallController.php:89
+* @see app/Http/Controllers/RollcallController.php:88
 * @route '/rollcall/{student}'
 */
 export const update = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -153,7 +153,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\RollcallController::update
-* @see app/Http/Controllers/RollcallController.php:89
+* @see app/Http/Controllers/RollcallController.php:88
 * @route '/rollcall/{student}'
 */
 update.url = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -186,7 +186,7 @@ update.url = (args: { student: number | { id: number } } | [student: number | { 
 
 /**
 * @see \App\Http\Controllers\RollcallController::update
-* @see app/Http/Controllers/RollcallController.php:89
+* @see app/Http/Controllers/RollcallController.php:88
 * @route '/rollcall/{student}'
 */
 update.put = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -196,7 +196,7 @@ update.put = (args: { student: number | { id: number } } | [student: number | { 
 
 /**
 * @see \App\Http\Controllers\RollcallController::update
-* @see app/Http/Controllers/RollcallController.php:89
+* @see app/Http/Controllers/RollcallController.php:88
 * @route '/rollcall/{student}'
 */
 const updateForm = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -211,7 +211,7 @@ const updateForm = (args: { student: number | { id: number } } | [student: numbe
 
 /**
 * @see \App\Http\Controllers\RollcallController::update
-* @see app/Http/Controllers/RollcallController.php:89
+* @see app/Http/Controllers/RollcallController.php:88
 * @route '/rollcall/{student}'
 */
 updateForm.put = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -228,7 +228,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\RollcallController::destroy
-* @see app/Http/Controllers/RollcallController.php:123
+* @see app/Http/Controllers/RollcallController.php:121
 * @route '/rollcall/{student}'
 */
 export const destroy = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -243,7 +243,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\RollcallController::destroy
-* @see app/Http/Controllers/RollcallController.php:123
+* @see app/Http/Controllers/RollcallController.php:121
 * @route '/rollcall/{student}'
 */
 destroy.url = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -276,7 +276,7 @@ destroy.url = (args: { student: number | { id: number } } | [student: number | {
 
 /**
 * @see \App\Http\Controllers\RollcallController::destroy
-* @see app/Http/Controllers/RollcallController.php:123
+* @see app/Http/Controllers/RollcallController.php:121
 * @route '/rollcall/{student}'
 */
 destroy.delete = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -286,7 +286,7 @@ destroy.delete = (args: { student: number | { id: number } } | [student: number 
 
 /**
 * @see \App\Http\Controllers\RollcallController::destroy
-* @see app/Http/Controllers/RollcallController.php:123
+* @see app/Http/Controllers/RollcallController.php:121
 * @route '/rollcall/{student}'
 */
 const destroyForm = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -301,7 +301,7 @@ const destroyForm = (args: { student: number | { id: number } } | [student: numb
 
 /**
 * @see \App\Http\Controllers\RollcallController::destroy
-* @see app/Http/Controllers/RollcallController.php:123
+* @see app/Http/Controllers/RollcallController.php:121
 * @route '/rollcall/{student}'
 */
 destroyForm.delete = (args: { student: number | { id: number } } | [student: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -318,7 +318,7 @@ destroy.form = destroyForm
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeGrade
-* @see app/Http/Controllers/RollcallController.php:134
+* @see app/Http/Controllers/RollcallController.php:132
 * @route '/rollcall/grades'
 */
 export const storeGrade = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -333,7 +333,7 @@ storeGrade.definition = {
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeGrade
-* @see app/Http/Controllers/RollcallController.php:134
+* @see app/Http/Controllers/RollcallController.php:132
 * @route '/rollcall/grades'
 */
 storeGrade.url = (options?: RouteQueryOptions) => {
@@ -342,7 +342,7 @@ storeGrade.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeGrade
-* @see app/Http/Controllers/RollcallController.php:134
+* @see app/Http/Controllers/RollcallController.php:132
 * @route '/rollcall/grades'
 */
 storeGrade.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -352,7 +352,7 @@ storeGrade.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeGrade
-* @see app/Http/Controllers/RollcallController.php:134
+* @see app/Http/Controllers/RollcallController.php:132
 * @route '/rollcall/grades'
 */
 const storeGradeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -362,7 +362,7 @@ const storeGradeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeGrade
-* @see app/Http/Controllers/RollcallController.php:134
+* @see app/Http/Controllers/RollcallController.php:132
 * @route '/rollcall/grades'
 */
 storeGradeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -374,7 +374,7 @@ storeGrade.form = storeGradeForm
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeBus
-* @see app/Http/Controllers/RollcallController.php:145
+* @see app/Http/Controllers/RollcallController.php:143
 * @route '/rollcall/buses'
 */
 export const storeBus = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -389,7 +389,7 @@ storeBus.definition = {
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeBus
-* @see app/Http/Controllers/RollcallController.php:145
+* @see app/Http/Controllers/RollcallController.php:143
 * @route '/rollcall/buses'
 */
 storeBus.url = (options?: RouteQueryOptions) => {
@@ -398,7 +398,7 @@ storeBus.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeBus
-* @see app/Http/Controllers/RollcallController.php:145
+* @see app/Http/Controllers/RollcallController.php:143
 * @route '/rollcall/buses'
 */
 storeBus.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -408,7 +408,7 @@ storeBus.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeBus
-* @see app/Http/Controllers/RollcallController.php:145
+* @see app/Http/Controllers/RollcallController.php:143
 * @route '/rollcall/buses'
 */
 const storeBusForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -418,7 +418,7 @@ const storeBusForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> 
 
 /**
 * @see \App\Http\Controllers\RollcallController::storeBus
-* @see app/Http/Controllers/RollcallController.php:145
+* @see app/Http/Controllers/RollcallController.php:143
 * @route '/rollcall/buses'
 */
 storeBusForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -430,7 +430,7 @@ storeBus.form = storeBusForm
 
 /**
 * @see \App\Http\Controllers\RollcallController::print
-* @see app/Http/Controllers/RollcallController.php:156
+* @see app/Http/Controllers/RollcallController.php:154
 * @route '/rollcall/print'
 */
 export const print = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -445,7 +445,7 @@ print.definition = {
 
 /**
 * @see \App\Http\Controllers\RollcallController::print
-* @see app/Http/Controllers/RollcallController.php:156
+* @see app/Http/Controllers/RollcallController.php:154
 * @route '/rollcall/print'
 */
 print.url = (options?: RouteQueryOptions) => {
@@ -454,7 +454,7 @@ print.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\RollcallController::print
-* @see app/Http/Controllers/RollcallController.php:156
+* @see app/Http/Controllers/RollcallController.php:154
 * @route '/rollcall/print'
 */
 print.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -464,7 +464,7 @@ print.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\RollcallController::print
-* @see app/Http/Controllers/RollcallController.php:156
+* @see app/Http/Controllers/RollcallController.php:154
 * @route '/rollcall/print'
 */
 print.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -474,7 +474,7 @@ print.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\RollcallController::print
-* @see app/Http/Controllers/RollcallController.php:156
+* @see app/Http/Controllers/RollcallController.php:154
 * @route '/rollcall/print'
 */
 const printForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -484,7 +484,7 @@ const printForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\RollcallController::print
-* @see app/Http/Controllers/RollcallController.php:156
+* @see app/Http/Controllers/RollcallController.php:154
 * @route '/rollcall/print'
 */
 printForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -494,7 +494,7 @@ printForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\RollcallController::print
-* @see app/Http/Controllers/RollcallController.php:156
+* @see app/Http/Controllers/RollcallController.php:154
 * @route '/rollcall/print'
 */
 printForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

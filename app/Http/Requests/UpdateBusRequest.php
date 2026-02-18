@@ -4,8 +4,9 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class StoreBusRequest extends FormRequest
+class UpdateBusRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,7 +24,12 @@ class StoreBusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'number' => ['required', 'string', 'max:255', 'unique:buses,number'],
+            'number' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('buses', 'number')->ignore($this->route('bus')),
+            ],
             'name' => ['nullable', 'string', 'max:255'],
             'bus_staff' => ['nullable', 'array'],
             'bus_staff.*.trip_type' => ['required', 'string', 'in:trip_1_morning,trip_1_evening,trip_2_morning,trip_2_evening'],

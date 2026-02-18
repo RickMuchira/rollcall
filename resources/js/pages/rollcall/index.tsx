@@ -26,7 +26,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { index as rollcallIndex, store, update, destroy, print as printRoute } from '@/routes/rollcall';
-import { storeGrade, storeBus } from '@/actions/App/Http/Controllers/RollcallController';
+import { store as storeGrade } from '@/routes/rollcall/grades';
 
 interface Grade {
     id: number;
@@ -37,12 +37,16 @@ interface Bus {
     id: number;
     number: string;
     name?: string;
+    driver_name?: string;
+    assistant_name?: string;
 }
 
 interface StudentBusTrip {
     id: number;
-    bus_id: number;
-    trip_type: string;
+    number: string;
+    name?: string;
+    driver_name?: string;
+    assistant_name?: string;
     pivot: {
         trip_type: string;
     };
@@ -81,30 +85,29 @@ export default function RollcallIndex({ students, grades, buses }: Props) {
     const { flash } = usePage().props as { flash?: { success?: string } };
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
     const [showGradeDialog, setShowGradeDialog] = useState(false);
-    const [showBusDialog, setShowBusDialog] = useState(false);
     const [newGradeName, setNewGradeName] = useState('');
-    const [newBusNumber, setNewBusNumber] = useState('');
-    const [newBusName, setNewBusName] = useState('');
 
     const studentForm = useForm({
         name: '',
         grade_id: '',
         grade_name: '',
         transport: false,
-        bus_id: '',
-        trip_types: [] as string[],
+        bus_assignments: [] as { trip_type: string; bus_id: string }[],
     });
 
     useEffect(() => {
         if (editingStudent) {
-            const firstBus = editingStudent.buses?.[0];
+            const busAssignments = editingStudent.buses?.map((bus) => ({
+                trip_type: bus.pivot?.trip_type || '',
+                bus_id: bus.id.toString(),
+            })) || [];
+            
             studentForm.setData({
                 name: editingStudent.name,
                 grade_id: editingStudent.grade_id?.toString() || '',
                 grade_name: '',
                 transport: editingStudent.transport,
-                bus_id: firstBus?.id?.toString() || '',
-                trip_types: editingStudent.buses?.map((b) => b.pivot?.trip_type).filter(Boolean) || [],
+                bus_assignments: busAssignments,
             });
         } else {
             studentForm.reset();
@@ -137,20 +140,24 @@ export default function RollcallIndex({ students, grades, buses }: Props) {
             submitData.grade_name = studentForm.data.grade_name;
         }
 
-        if (studentForm.data.transport && studentForm.data.bus_id) {
-            submitData.bus_id = parseInt(studentForm.data.bus_id);
-            submitData.trip_types = studentForm.data.trip_types;
+        if (studentForm.data.transport && studentForm.data.bus_assignments.length > 0) {
+            submitData.bus_assignments = studentForm.data.bus_assignments.map(assignment => ({
+                bus_id: parseInt(assignment.bus_id),
+                trip_type: assignment.trip_type,
+            }));
         }
 
         if (editingStudent) {
-            studentForm.transform(() => submitData).put(update({ student: editingStudent.id }).url, {
+            studentForm.setData(submitData);
+            studentForm.put(update({ student: editingStudent.id }).url, {
                 onSuccess: () => {
                     setEditingStudent(null);
                     studentForm.reset();
                 },
             });
         } else {
-            studentForm.transform(() => submitData).post(store().url, {
+            studentForm.setData(submitData);
+            studentForm.post(store().url, {
                 onSuccess: () => {
                     studentForm.reset();
                 },
@@ -222,73 +229,6 @@ export default function RollcallIndex({ students, grades, buses }: Props) {
                                                 </Button>
                                                 <Button type="submit" disabled={processing}>
                                                     Create Grade
-                                                </Button>
-                                            </DialogFooter>
-                                        </>
-                                    )}
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
-
-                        <Dialog open={showBusDialog} onOpenChange={setShowBusDialog}>
-                            <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <Bus className="mr-2 h-4 w-4" />
-                                    Add Bus
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Add New Bus</DialogTitle>
-                                    <DialogDescription>
-                                        Register a new bus for transportation
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <Form
-                                    {...storeBus.form()}
-                                    onSuccess={() => {
-                                        setShowBusDialog(false);
-                                        setNewBusNumber('');
-                                        setNewBusName('');
-                                    }}
-                                >
-                                    {({ processing, errors }) => (
-                                        <>
-                                            <div className="grid gap-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="bus_number">Bus Number *</Label>
-                                                    <Input
-                                                        id="bus_number"
-                                                        name="number"
-                                                        value={newBusNumber}
-                                                        onChange={(e) => setNewBusNumber(e.target.value)}
-                                                        placeholder="e.g., BUS-001"
-                                                        required
-                                                    />
-                                                    <InputError message={errors.number} />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="bus_name">Bus Name (Optional)</Label>
-                                                    <Input
-                                                        id="bus_name"
-                                                        name="name"
-                                                        value={newBusName}
-                                                        onChange={(e) => setNewBusName(e.target.value)}
-                                                        placeholder="e.g., Route A"
-                                                    />
-                                                    <InputError message={errors.name} />
-                                                </div>
-                                            </div>
-                                            <DialogFooter>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => setShowBusDialog(false)}
-                                                >
-                                                    Cancel
-                                                </Button>
-                                                <Button type="submit" disabled={processing}>
-                                                    Create Bus
                                                 </Button>
                                             </DialogFooter>
                                         </>
@@ -381,89 +321,90 @@ export default function RollcallIndex({ students, grades, buses }: Props) {
                                 </div>
 
                                 {studentForm.data.transport && (
-                                    <>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="bus_id">Bus *</Label>
-                                            <Select
-                                                value={studentForm.data.bus_id || undefined}
-                                                onValueChange={(value) => studentForm.setData('bus_id', value)}
-                                                required={studentForm.data.transport}
-                                            >
-                                                <SelectTrigger id="bus_id">
-                                                    <SelectValue placeholder="Select bus" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {buses.map((bus) => (
-                                                        <SelectItem
-                                                            key={bus.id}
-                                                            value={bus.id.toString()}
-                                                        >
-                                                            {bus.number} {bus.name && `- ${bus.name}`}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <InputError message={studentForm.errors.bus_id} />
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label>Trip Types *</Label>
-
-                                            {/* Select all trips */}
-                                            <div className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id="trip_all"
-                                                    checked={studentForm.data.trip_types.length === tripTypes.length}
-                                                    onChange={(e) => {
-                                                        const allValues = tripTypes.map((t) => t.value);
-                                                        studentForm.setData(
-                                                            'trip_types',
-                                                            e.target.checked ? allValues : [],
-                                                        );
-                                                    }}
-                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                                />
-                                                <Label
-                                                    htmlFor="trip_all"
-                                                    className="text-sm font-normal cursor-pointer"
-                                                >
-                                                    Select all trips
-                                                </Label>
-                                            </div>
-
-                                            {/* Individual trips */}
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {tripTypes.map((trip) => (
-                                                    <div key={trip.value} className="flex items-center space-x-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            id={`trip_${trip.value}`}
-                                                            name="trip_types[]"
-                                                            value={trip.value}
-                                                            checked={studentForm.data.trip_types.includes(trip.value)}
-                                                            onChange={(e) => {
-                                                                const newTripTypes = e.target.checked
-                                                                    ? [...studentForm.data.trip_types, trip.value]
-                                                                    : studentForm.data.trip_types.filter(
-                                                                          (t) => t !== trip.value,
-                                                                      );
-                                                                studentForm.setData('trip_types', newTripTypes);
+                                    <div className="grid gap-4">
+                                        <Label>Bus Assignments</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Assign buses for each trip type. Students can have different buses for morning and evening trips.
+                                        </p>
+                                        
+                                        {tripTypes.map((trip) => {
+                                            const existingAssignment = studentForm.data.bus_assignments.find(
+                                                (assignment) => assignment.trip_type === trip.value
+                                            );
+                                            
+                                            return (
+                                                <div key={trip.value} className="grid gap-2 p-3 border rounded-lg">
+                                                    <Label htmlFor={`bus_${trip.value}`} className="text-sm font-medium">
+                                                        {trip.label}
+                                                    </Label>
+                                                    <div className="flex items-center gap-2">
+                                                        <Select
+                                                            value={existingAssignment?.bus_id || ''}
+                                                            onValueChange={(busId) => {
+                                                                const newAssignments = [...studentForm.data.bus_assignments];
+                                                                const existingIndex = newAssignments.findIndex(
+                                                                    (assignment) => assignment.trip_type === trip.value
+                                                                );
+                                                                
+                                                                if (busId) {
+                                                                    if (existingIndex >= 0) {
+                                                                        newAssignments[existingIndex].bus_id = busId;
+                                                                    } else {
+                                                                        newAssignments.push({
+                                                                            trip_type: trip.value,
+                                                                            bus_id: busId,
+                                                                        });
+                                                                    }
+                                                                } else {
+                                                                    // Remove assignment if no bus selected
+                                                                    if (existingIndex >= 0) {
+                                                                        newAssignments.splice(existingIndex, 1);
+                                                                    }
+                                                                }
+                                                                
+                                                                studentForm.setData('bus_assignments', newAssignments);
                                                             }}
-                                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                                        />
-                                                        <Label
-                                                            htmlFor={`trip_${trip.value}`}
-                                                            className="text-sm font-normal cursor-pointer"
                                                         >
-                                                            {trip.label}
-                                                        </Label>
+                                                            <SelectTrigger id={`bus_${trip.value}`} className="flex-1">
+                                                                <SelectValue placeholder="Select bus (optional)" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {buses.map((bus) => (
+                                                                    <SelectItem
+                                                                        key={bus.id}
+                                                                        value={bus.id.toString()}
+                                                                    >
+                                                                        {bus.number} {bus.name && `- ${bus.name}`}
+                                                                        {bus.driver_name && bus.assistant_name && 
+                                                                            ` (${bus.driver_name}/${bus.assistant_name})`
+                                                                        }
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        {existingAssignment && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    const newAssignments = studentForm.data.bus_assignments.filter(
+                                                                        (assignment) => assignment.trip_type !== trip.value
+                                                                    );
+                                                                    studentForm.setData('bus_assignments', newAssignments);
+                                                                }}
+                                                                title="Remove this bus assignment"
+                                                            >
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
+                                                        )}
                                                     </div>
-                                                ))}
-                                            </div>
-                                            <InputError message={studentForm.errors.trip_types} />
-                                        </div>
-                                    </>
+                                                </div>
+                                            );
+                                        })}
+                                        
+                                        <InputError message={studentForm.errors.bus_assignments} />
+                                    </div>
                                 )}
 
                                 <div className="flex gap-2">
@@ -528,7 +469,7 @@ export default function RollcallIndex({ students, grades, buses }: Props) {
                                             <th className="px-4 py-2 text-left text-sm font-medium">Name</th>
                                             <th className="px-4 py-2 text-left text-sm font-medium">Grade</th>
                                             <th className="px-4 py-2 text-left text-sm font-medium">Transport</th>
-                                            <th className="px-4 py-2 text-left text-sm font-medium">Trips</th>
+                                            <th className="px-4 py-2 text-left text-sm font-medium">Bus & Trips</th>
                                             <th className="px-4 py-2 text-right text-sm font-medium">Actions</th>
                                         </tr>
                                     </thead>
@@ -552,7 +493,7 @@ export default function RollcallIndex({ students, grades, buses }: Props) {
                                                     <td className="px-4 py-2">
                                                         {student.transport && student.buses && student.buses.length > 0
                                                             ? student.buses
-                                                                  .map((b) => formatTripType(b.pivot?.trip_type || ''))
+                                                                  .map((b) => `${b.number} (${formatTripType(b.pivot?.trip_type || '')})`)
                                                                   .filter(Boolean)
                                                                   .join(', ')
                                                             : '-'}

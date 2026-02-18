@@ -28,9 +28,9 @@ class UpdateStudentRequest extends FormRequest
             'grade_id' => ['nullable', 'exists:grades,id'],
             'grade_name' => ['nullable', 'string', 'max:255', 'required_without:grade_id'],
             'transport' => ['sometimes', 'boolean'],
-            'bus_id' => ['nullable', 'required_if:transport,true', 'exists:buses,id'],
-            'trip_types' => ['nullable', 'array'],
-            'trip_types.*' => ['required', 'string', Rule::in(['trip_1_morning', 'trip_2_morning', 'trip_1_evening', 'trip_2_evening'])],
+            'bus_assignments' => ['nullable', 'array', 'required_if:transport,true'],
+            'bus_assignments.*.bus_id' => ['required', 'exists:buses,id'],
+            'bus_assignments.*.trip_type' => ['required', 'string', Rule::in(['trip_1_morning', 'trip_2_morning', 'trip_1_evening', 'trip_2_evening'])],
         ];
     }
 
@@ -45,9 +45,9 @@ class UpdateStudentRequest extends FormRequest
             'name.required' => 'Student name is required.',
             'grade_id.exists' => 'Selected grade does not exist.',
             'grade_name.required_without' => 'Grade name is required when creating a new grade.',
-            'bus_id.required_if' => 'Bus selection is required when transportation is enabled.',
-            'bus_id.exists' => 'Selected bus does not exist.',
-            'trip_types.*.in' => 'Invalid trip type selected.',
+            'bus_assignments.required_if' => 'At least one bus assignment is required when transportation is enabled.',
+            'bus_assignments.*.bus_id.exists' => 'Selected bus does not exist.',
+            'bus_assignments.*.trip_type.in' => 'Invalid trip type selected.',
         ];
     }
 }

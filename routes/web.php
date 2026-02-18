@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BusController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\RollcallController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rollcall/print', [RollcallController::class, 'print'])->name('rollcall.print');
 
     Route::resource('grades', GradeController::class);
+    Route::resource('buses', BusController::class);
 });
 
 require __DIR__.'/settings.php';
