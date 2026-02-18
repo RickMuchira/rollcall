@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Folder, GraduationCap, LayoutGrid, Users } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -15,12 +15,24 @@ import {
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 import { dashboard } from '@/routes';
+import { index as rollcallIndex } from '@/routes/rollcall';
+import { index as gradesIndex } from '@/routes/grades';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Rollcall',
+        href: rollcallIndex(),
+        icon: Users,
+    },
+    {
+        title: 'Grades',
+        href: gradesIndex(),
+        icon: GraduationCap,
     },
 ];
 
